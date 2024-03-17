@@ -1,0 +1,22 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "queuing", "queuing\queuing.csproj", "{2A7AB360-CCDB-4567-A722-BFDDCBED3029}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "rmqlib", "rmqlib\rmqlib.csproj", "{FD25155B-7168-4D01-A74E-209CE133A0F7}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{2A7AB360-CCDB-4567-A722-BFDDCBED3029}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2A7AB360-CCDB-4567-A722-BFDDCBED3029}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2A7AB360-CCDB-4567-A722-BFDDCBED3029}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2A7AB360-CCDB-4567-A722-BFDDCBED3029}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD25155B-7168-4D01-A74E-209CE133A0F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD25155B-7168-4D01-A74E-209CE133A0F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD25155B-7168-4D01-A74E-209CE133A0F7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD25155B-7168-4D01-A74E-209CE133A0F7}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal

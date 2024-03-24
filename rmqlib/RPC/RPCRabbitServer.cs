@@ -1,25 +1,20 @@
+using System.Collections.Concurrent;
 using Google.Protobuf;
 
 namespace rmqlib.RPC;
-
 using RabbitMQ.Client;
 using RabbitMQ.Client.Events;
 using System;
 using System.Text;
 
-public abstract class RpcServer<TRequest,TResponse> :RPCBase<TRequest, TResponse>
-    where TRequest: IMessage<TRequest>, new() 
-    where TResponse: IMessage<TResponse>, new()
+public abstract class RpcServer<TRequest, TResponse>(string? hostname, string exchange, string user)
+    : RpcBase<TRequest, TResponse>(hostname, exchange, user)
+    where TRequest : IMessage<TRequest>, new()
+    where TResponse : IMessage<TResponse>, new()
 {
-    private Func<TRequest, TResponse> fProcess;
     private CancellationTokenSource _cts = new CancellationTokenSource();
 
-    public RpcServer(string? hostname, string exchange, string user, bool autodelete,
-        Func<TRequest, TResponse> fProcess) : base(hostname, exchange, user, autodelete)
-    {
-        this.fProcess = fProcess;
-    }
-    abstract public TResponse Process(TRequest request);
+    protected abstract TResponse Process(TRequest request);
     
     private static List<byte[]> SplitByteArray(byte[] source)
     {
@@ -47,9 +42,11 @@ public abstract class RpcServer<TRequest,TResponse> :RPCBase<TRequest, TResponse
         Task.Run(() =>
         {
             var consumer = new EventingBasicConsumer(Channel);
+            Channel.BasicConsume(queue: QueueName, autoAck: false, consumer: consumer);
+
             consumer.Received += (model, ea) =>
             {
-                List<byte[]> responseBytes = null;
+                List<byte[]> responseBytes = new List<byte[]>();
 
                 var props = ea.BasicProperties;
                 
@@ -58,14 +55,18 @@ public abstract class RpcServer<TRequest,TResponse> :RPCBase<TRequest, TResponse
                     var body = ea.Body.ToArray();
                     TRequest request = new TRequest();
                     request.MergeFrom(body);
-                    TResponse response = fProcess(request);
+                    TResponse response = Process(request);
 
                     responseBytes = SplitByteArray(response.ToByteArray());
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(" [.] " + e.Message);
-                    responseBytes.Add(new byte[0]);
+                    var errorResponse = new Queuing.Protobuf.Messages.ErrorMgs
+                    {
+                        Error = e.Message
+                    };
+                    responseBytes.Add(errorResponse.ToByteArray());
                 }
                 finally
                 {
@@ -82,9 +83,7 @@ public abstract class RpcServer<TRequest,TResponse> :RPCBase<TRequest, TResponse
                     Channel.BasicAck(deliveryTag: ea.DeliveryTag, multiple: false);
                 }
             };
-
-            Channel.BasicConsume(queue: QueueName, autoAck: false, consumer: consumer);
-
+            
             Console.WriteLine(" [x] Awaiting RPC requests");
             _cts.Token.WaitHandle.WaitOne();
         });

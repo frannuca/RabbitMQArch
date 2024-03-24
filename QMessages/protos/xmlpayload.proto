@@ -1,0 +1,18 @@
+syntax = "proto3";
+package queuing.protobuf.messages;
+
+message XmlMessage {
+  string xml_string = 1;
+}
+
+message GenericRequest{
+  XmlMessage xml = 1;
+}
+
+message ErrorMgs{
+  string error = 1;
+}
+message  GenericResponse{
+  XmlMessage xml = 1;
+  optional ErrorMgs error = 2; 
+}

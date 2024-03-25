@@ -13,9 +13,11 @@ public abstract class RpcBase<TRequest, TResponse>: IDisposable
     private readonly string _user;
     private readonly string _queueName = typeof(TRequest).Name.ToLower().Replace("request","");
     protected CancellationTokenSource cts = new CancellationTokenSource();
+    protected Action<string>? _notificationAction;
     protected CancellationToken ct => cts.Token;
-    protected RpcBase(string? hostname, string exchange,string user)
+    protected RpcBase(string? hostname, string exchange,string user, Action<string>? notificationAction=null)
     {
+        _notificationAction = notificationAction;
         _exchange = exchange;
         _user = user;
         var factory = new ConnectionFactory() { HostName = hostname ?? "localhost" };

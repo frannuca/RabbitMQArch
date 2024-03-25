@@ -1,5 +1,7 @@
 using System.Collections.Concurrent;
 using Google.Protobuf;
+using Queuing.Protobuf.Messages;
+using rmqlib.broadcast;
 
 namespace rmqlib.RPC;
 using RabbitMQ.Client;
@@ -7,13 +9,13 @@ using RabbitMQ.Client.Events;
 using System;
 using System.Text;
 
-public abstract class RpcServer<TRequest, TResponse>(string? hostname, string exchange, string user)
-    : RpcBase<TRequest, TResponse>(hostname, exchange, user)
+public abstract class RpcServer<TRequest, TResponse>(string? hostname, string exchange, string user,Action<string>? notificationAction=null)
+    : RpcBase<TRequest, TResponse>(hostname, exchange, user,notificationAction )
     where TRequest : IMessage<TRequest>, new()
     where TResponse : IMessage<TResponse>, new()
 {
     private CancellationTokenSource _cts = new CancellationTokenSource();
-
+    
     protected abstract TResponse Process(TRequest request);
     
     private static List<byte[]> SplitByteArray(byte[] source)
@@ -62,9 +64,10 @@ public abstract class RpcServer<TRequest, TResponse>(string? hostname, string ex
                 catch (Exception e)
                 {
                     Console.WriteLine(" [.] " + e.Message);
-                    var errorResponse = new Queuing.Protobuf.Messages.ErrorMgs
+                    _notificationAction?.Invoke(e.Message);
+                    var errorResponse = new Queuing.Protobuf.Messages.GenericResponse()
                     {
-                        Error = e.Message
+                        Error = new ErrorMgs(){Error=e.Message}
                     };
                     responseBytes.Add(errorResponse.ToByteArray());
                 }

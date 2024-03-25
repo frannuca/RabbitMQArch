@@ -16,3 +16,7 @@ message  GenericResponse{
   XmlMessage xml = 1;
   optional ErrorMgs error = 2; 
 }
+
+message BroadCastMessage{
+  string message = 1;
+}

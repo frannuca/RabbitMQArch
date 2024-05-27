@@ -10,31 +10,31 @@ public class BroadCastServer<TMessage> : IDisposable
     public string Exchange { get; }
     private readonly IConnection _connection;
     private readonly IModel _channel;
-    private CancellationTokenSource cts = new CancellationTokenSource();
+    private CancellationTokenSource cts = new();
     private CancellationToken ct => cts.Token;
-    private readonly string _queueName = typeof(TMessage).Name.ToLower()+"_broadcast";
+    private readonly string _queueName = typeof(TMessage).Name.ToLower() + "_broadcast";
     public string QueueName => _queueName;
     protected Action<TMessage> _fCallback;
     public IModel Channel => _channel;
-    public BroadCastServer(string host,string exchange,Action<TMessage> fCallback)
+
+    public BroadCastServer(string host, string exchange, Action<TMessage> fCallback)
     {
         Exchange = exchange;
-        _fCallback= fCallback;
+        _fCallback = fCallback;
         var factory = new ConnectionFactory() { HostName = host ?? "localhost" };
         _connection = factory.CreateConnection();
         _channel = _connection.CreateModel();
-        _channel.ExchangeDeclare(exchange,ExchangeType.Fanout);
-        _channel.QueueDeclare(_queueName,false,false,false,null);
+        _channel.ExchangeDeclare(exchange, ExchangeType.Fanout);
+        _channel.QueueDeclare(_queueName, false, false, false, null);
         _channel.QueueBind(_queueName, exchange, "");
-        
-        
     }
+
     public Task Start()
     {
         Task.Run(() =>
         {
             var consumer = new EventingBasicConsumer(Channel);
-            Channel.BasicConsume(queue: QueueName, autoAck: false, consumer: consumer);
+            Channel.BasicConsume(QueueName, false, consumer);
 
             consumer.Received += (model, ea) =>
             {
@@ -42,7 +42,7 @@ public class BroadCastServer<TMessage> : IDisposable
                 try
                 {
                     var body = ea.Body.ToArray();
-                    TMessage request = new TMessage();
+                    var request = new TMessage();
                     request.MergeFrom(body);
                     _fCallback(request);
                 }
@@ -51,7 +51,7 @@ public class BroadCastServer<TMessage> : IDisposable
                     Console.WriteLine(" [.] " + e.Message);
                 }
             };
-            
+
             Console.WriteLine(" [x] Awaiting BroadCasting requests");
             cts.Token.WaitHandle.WaitOne();
         });
